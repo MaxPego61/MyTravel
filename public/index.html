@@ -90,7 +90,7 @@
       msalInstance.handleRedirectPromise().then(() => {
         const ok = checkLogin();
         if (ok) {
-          // addLogoutButton(); // scommenta solo per testare il logout MSAL
+          addLogoutButton(); // scommenta solo per testare il logout MSAL
           startMyTravel();
         }
       }).catch(err => {
