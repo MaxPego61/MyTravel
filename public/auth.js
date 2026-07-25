@@ -5,6 +5,14 @@ function getMsalConfig() {
             authority: `https://login.microsoftonline.com/${window.MS_TENANT_ID}`,
             redirectUri: window.location.origin,
             postLogoutRedirectUri: window.location.origin
+        },
+        cache: {
+            // localStorage (invece del default sessionStorage) è condiviso tra
+            // tutte le finestre/schede dello stesso sito — necessario perché
+            // photos.html riesca a trovare la sessione già aperta nella pagina
+            // principale senza dover rifare login.
+            cacheLocation: "localStorage",
+            storeAuthStateInCookie: false
         }
     };
 }

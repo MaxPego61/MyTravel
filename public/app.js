@@ -505,5 +505,5 @@ if (window.innerWidth <= 900) {
 // Phase 2: photo gallery — opens a new window with the OneDrive album viewer
 function openPhotoPage(folderPath) {
   const url = `photos.html?folder=${encodeURIComponent(folderPath)}`;
-  window.open(url, '_blank', 'noopener');
+  window.open(url, '_blank');
 }

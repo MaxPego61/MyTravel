@@ -158,9 +158,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length === 0) {
-      // No cached session in this window — send the user through login here too
-      setStatus('Signing in…');
-      msalInstance.loginRedirect({ scopes: ["User.Read", "Files.Read"] });
+      // No cached session found even in localStorage — rather than starting an
+      // interactive redirect from here (which would land back on the main app
+      // and lose this album's context), ask the user to sign in there first.
+      document.getElementById('river-gallery').style.display = 'none';
+      setStatus('');
+      document.getElementById('album-status').innerHTML = `
+        <p>You need to be signed in on the main MyTravel page first.</p>
+        <p style="margin-top:10px;">
+          <a href="/" target="_blank" style="color:#4fc3f7;">Open MyTravel and sign in</a>,
+          then reopen this album.
+        </p>
+      `;
       return;
     }
 
