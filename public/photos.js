@@ -13,21 +13,24 @@ function setStatus(msg, isError = false) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-async function fetchAlbumItems(folderPath, token) {
+async function fetchAlbumItemsPaged(folderPath, token, onPage) {
   const encodedPath = folderPath.split('/').map(encodeURIComponent).join('/');
-  const url = `https://graph.microsoft.com/v1.0/me/drive/root:/Pictures/${encodedPath}:/children?$expand=thumbnails&$top=200`;
+  let url = `https://graph.microsoft.com/v1.0/me/drive/root:/Pictures/${encodedPath}:/children?$expand=thumbnails&$top=100`;
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  while (url) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Graph API error ${res.status}: ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Graph API error ${res.status}: ${body.slice(0, 200)}`);
+    }
+
+    const data = await res.json();
+    onPage(data.value || []);
+    url = data['@odata.nextLink'] || null;
   }
-
-  const data = await res.json();
-  return data.value || [];
 }
 
 function mapGraphItem(item) {
@@ -65,10 +68,17 @@ function formatDuration(ms) {
 function renderGallery(items) {
   const gallery = document.getElementById('river-gallery');
   gallery.innerHTML = '';
+  appendItemsToGallery(items, 0);
+}
 
+// Adds tiles for newly-arrived items only, without touching tiles already
+// in the DOM (so their thumbnails don't get re-fetched/re-rendered).
+function appendItemsToGallery(items, startIndex) {
+  const gallery = document.getElementById('river-gallery');
   const rowHeight = window.innerWidth <= 640 ? 130 : 220;
 
-  items.forEach((item, index) => {
+  items.forEach((item, i) => {
+    const index = startIndex + i;
     const aspect = item.width / item.height;
     const tile = document.createElement('div');
     tile.className = 'river-item';
@@ -140,21 +150,31 @@ function renderLightboxContent() {
 }
 
 async function loadAlbum(folderPath, token) {
-  try {
-    setStatus('Loading photos…');
-    const rawItems = await fetchAlbumItems(folderPath, token);
-    ITEMS = rawItems.map(mapGraphItem).filter(Boolean);
+  ITEMS = [];
+  document.getElementById('river-gallery').innerHTML = '';
+  document.getElementById('river-gallery').style.display = 'flex';
+  setStatus('Loading photos…');
 
-    // Chronological order
-    ITEMS.sort((a, b) => new Date(a.takenAt || 0) - new Date(b.takenAt || 0));
+  try {
+    await fetchAlbumItemsPaged(folderPath, token, (rawPage) => {
+      const mapped = rawPage.map(mapGraphItem).filter(Boolean);
+      if (mapped.length === 0) return;
+
+      // Sort within this page so at least locally items appear in date
+      // order; a full cross-page re-sort would mean re-rendering (and
+      // re-fetching) every already-shown thumbnail on each new page.
+      mapped.sort((a, b) => new Date(a.takenAt || 0) - new Date(b.takenAt || 0));
+
+      const startIndex = ITEMS.length;
+      ITEMS.push(...mapped);
+      appendItemsToGallery(mapped, startIndex);
+
+      setStatus(''); // clear "loading" as soon as the first items appear
+    });
 
     if (ITEMS.length === 0) {
       setStatus('No photos or videos found in this album.');
-      return;
     }
-
-    setStatus('');
-    renderGallery(ITEMS);
   } catch (err) {
     console.error('Photo album error:', err);
     setStatus(`Unable to load this album: ${err.message}`, true);
