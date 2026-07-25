@@ -103,7 +103,7 @@ h1 { color:#4fc3f7; text-align:center; margin-bottom:20px; font-size:28px; }
 .photo-btn:hover { background:#6dd5ff; }
 .photo-btn .icon { width:16px; height:16px; }
 
-/* VOLI IN TRANSITO – BORDO GRIGIO CHIARO */
+/* TRANSIT FLIGHTS – LIGHT GRAY BORDER */
 .leg-item.transit {
   border-left: 4px solid #999999 !important;
   background: #2a2a2a !important;
@@ -122,7 +122,7 @@ h1 { color:#4fc3f7; text-align:center; margin-bottom:20px; font-size:28px; }
 .toggle-buttons button.active { background:#4fc3f7; color:black; }
 .toggle-buttons button:not(.active) { background:#444; opacity:0.7; }
 
-/* Marker più piccoli e proporzionati */
+/* Smaller, better-proportioned markers */
 .pin-container {
   position: relative;
   width: 26px; height: 36px;
@@ -157,7 +157,7 @@ h1 { color:#4fc3f7; text-align:center; margin-bottom:20px; font-size:28px; }
   overflow: visible;
 }
 .notes-section::before {
-  content: "Note del viaggio";
+  content: "Trip notes";
   position: absolute; top: -54px; left: 20px;
   background: #0e0e0e; color: #FFC107; font-weight: bold; font-size: 15px;
   padding: 8px 20px; border-radius: 30px; border: 3px solid #FFC107;

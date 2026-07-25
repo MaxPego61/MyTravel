@@ -25,11 +25,11 @@ function signOut() {
     });
 }
 
-// Whitelist client-side: nasconde l'app a chi non è autorizzato.
-// NOTA IMPORTANTE: questo è solo un filtro cosmetico lato browser.
-// /api/trips e /api/config non verificano ancora il token — chiunque
-// conoscesse l'URL potrebbe chiamarli direttamente senza passare da qui.
-// Da mettere in sicurezza in un prossimo step se serve davvero privacy.
+// Client-side whitelist: hides the app from anyone not on the list.
+// IMPORTANT NOTE: this is only a cosmetic filter in the browser.
+// /api/trips and /api/config don't verify the token yet — anyone who
+// knew the URL could call them directly without going through this.
+// Worth hardening in a future step if real privacy is needed.
 const ALLOWED_EMAILS = [
     "pegoraro.massimo61@outlook.com",
     "terrymnz@outlook.com"
@@ -48,8 +48,8 @@ function checkLogin() {
 
     if (!ALLOWED_EMAILS.includes(window.USER.username.toLowerCase())) {
         loginScreen.innerHTML = `
-            <h2>Accesso non autorizzato</h2>
-            <p>L'account Microsoft <b>${window.USER.username}</b> non è abilitato.</p>
+            <h2>Access not authorized</h2>
+            <p>The Microsoft account <b>${window.USER.username}</b> is not enabled.</p>
         `;
         loginScreen.style.display = "flex";
         return false;
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     msalInstance.handleRedirectPromise().then(() => {
         const ok = checkLogin();
         if (ok) {
-            addLogoutButton();
+            // addLogoutButton();
             startMyTravel();
         }
     }).catch(err => {

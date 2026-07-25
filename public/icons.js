@@ -1,6 +1,6 @@
-// icons.js — set minimale di icone SVG inline, al posto di Font Awesome.
-// Ogni funzione ritorna una stringa SVG pronta da inserire in innerHTML.
-// Stroke-based, coerenti con il tema scuro e l'accento blu (#4fc3f7).
+// icons.js — minimal set of inline SVG icons, replacing Font Awesome.
+// Each entry is an SVG string ready to be inserted via innerHTML.
+// Stroke-based, matching the dark theme and the blue accent (#4fc3f7).
 
 const ICONS = {
   list: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
@@ -24,7 +24,7 @@ const ICONS = {
   search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>`
 };
 
-// Ritorna l'HTML di un'icona con classe css opzionale (per dimensione/colore).
+// Returns the HTML for an icon with an optional CSS class (for size/color).
 function icon(name, cssClass = "") {
   const svg = ICONS[name] || "";
   return `<span class="icon ${cssClass}">${svg}</span>`;

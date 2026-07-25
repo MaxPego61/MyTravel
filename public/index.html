@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>MyTravel</title>
@@ -12,38 +12,38 @@
 
 <body>
 
-  <!-- Schermata di login, mostrata finché MSAL non conferma l'account -->
+  <!-- Login screen, shown until MSAL confirms the account -->
   <div id="login-screen">
     <h1>MyTravel</h1>
-    <button id="loginBtn" onclick="signIn()">Accedi con Microsoft</button>
+    <button id="loginBtn" onclick="signIn()">Sign in with Microsoft</button>
   </div>
 
-  <!-- App vera e propria, nascosta finché non si è autenticati -->
+  <!-- The actual app, hidden until the user is authenticated -->
   <div class="container" id="app-container" style="display:none;">
     <div id="sidebar-left">
       <h1>MyTravel</h1>
       <div class="filters">
-        <input type="text" id="searchBox" placeholder="Cerca viaggio o città...">
-        <select id="yearFilter"><option value="">Tutti gli anni</option></select>
-        <select id="companionFilter"><option value="">Tutti i compagni</option></select>
+        <input type="text" id="searchBox" placeholder="Search trip or city...">
+        <select id="yearFilter"><option value="">All years</option></select>
+        <select id="companionFilter"><option value="">All companions</option></select>
         <div class="toggle-buttons">
-          <button id="toggleLines" class="active">Tratte ON</button>
-          <button id="toggleMarkers" class="active">Marker ON</button>
+          <button id="toggleLines" class="active">Routes ON</button>
+          <button id="toggleMarkers" class="active">Markers ON</button>
         </div>
       </div>
 
       <div class="stats-grid">
-        <div class="stat">Viaggi <span id="totalTrips">0</span></div>
-        <div class="stat">Voli <span id="totalFlights">0</span></div>
+        <div class="stat">Trips <span id="totalTrips">0</span></div>
+        <div class="stat">Flights <span id="totalFlights">0</span></div>
         <div class="stat">Km <span id="totalKm">0</span></div>
-        <div class="stat">Paesi <span id="totalCountries">0</span></div>
+        <div class="stat">Countries <span id="totalCountries">0</span></div>
       </div>
 
       <div id="tripList"></div>
     </div>
 
     <div id="map">
-      <div id="map-loading" class="map-loading">Caricamento mappa...</div>
+      <div id="map-loading" class="map-loading">Loading map...</div>
     </div>
 
     <div class="mobile-controls" id="mobileControls">
@@ -53,7 +53,7 @@
 
     <div id="sidebar-right">
       <div id="details-content">
-        <p><em>Clicca su un viaggio o una città</em></p>
+        <p><em>Click on a trip or a city</em></p>
       </div>
     </div>
   </div>
@@ -62,12 +62,12 @@
   <script src="app.js"></script>
 
   <script>
-    // Chiamata da auth.js dopo login riuscito
+    // Called by auth.js after a successful login
     function startMyTravel() {
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-container").style.display = "grid";
 
-      // Riempie i pulsanti mobile con le icone SVG
+      // Fill the mobile buttons with the SVG icons
       document.getElementById("open-left").innerHTML = icon("list");
       document.getElementById("open-right").innerHTML = icon("info");
 

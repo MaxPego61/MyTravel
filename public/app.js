@@ -5,13 +5,13 @@ let showLines = true;
 let showMarkers = true;
 let TRIPS = [];
 
-// Converti YYYY-MM-DD → Date valido
+// Convert YYYY-MM-DD → valid Date
 function parseDate(dateStr) {
   if (!dateStr) return null;
   return new Date(dateStr);
 }
 
-// Chiamata da Google Maps quando lo script è pronto (window.initMap)
+// Called by Google Maps once the script is ready (window.initMap)
 async function realInitMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 4,
@@ -23,11 +23,11 @@ async function realInitMap() {
     const res = await fetch('/api/trips');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    TRIPS = data.trips || data; // supporta sia {trips:[...]} che [...] diretto
+    TRIPS = data.trips || data; // supports both {trips:[...]} and a direct [...] array
   } catch (err) {
-    console.error("Errore caricamento viaggi:", err);
+    console.error("Error loading trips:", err);
     document.getElementById("tripList").innerHTML =
-      `<p style="color:#ff8a80;">Impossibile caricare i dati dei viaggi. Riprova più tardi.</p>`;
+      `<p style="color:#ff8a80;">Unable to load trip data. Please try again later.</p>`;
     return;
   } finally {
     const loading = document.getElementById("map-loading");
@@ -38,14 +38,14 @@ async function realInitMap() {
 
   document.getElementById("toggleLines").onclick = () => {
     showLines = !showLines;
-    document.getElementById("toggleLines").textContent = showLines ? "Tratte ON" : "Tratte OFF";
+    document.getElementById("toggleLines").textContent = showLines ? "Routes ON" : "Routes OFF";
     document.getElementById("toggleLines").classList.toggle("active");
     renderMap();
   };
 
   document.getElementById("toggleMarkers").onclick = () => {
     showMarkers = !showMarkers;
-    document.getElementById("toggleMarkers").textContent = showMarkers ? "Marker ON" : "Marker OFF";
+    document.getElementById("toggleMarkers").textContent = showMarkers ? "Markers ON" : "Markers OFF";
     document.getElementById("toggleMarkers").classList.toggle("active");
     renderMap();
   };
@@ -55,7 +55,7 @@ async function realInitMap() {
   renderAll();
 }
 
-// Compatibilità con la callback globale window.initMap definita in index.html/script.js
+// Compatibility with the global window.initMap callback defined in index.html/script.js
 window.initMap = function () {
   if (typeof realInitMap === "function") realInitMap();
 };
@@ -144,7 +144,7 @@ function renderTripList(trips) {
       <div class="details">
         <strong>${trip.tripName}</strong>
         <div>${formatDateRange(startDateStr, endDateStr)}</div>
-        <div>${flights} voli • ${days} giorn${days !== 1 ? 'i' : 'o'}</div>
+        <div>${flights} flights • ${days} day${days !== 1 ? 's' : ''}</div>
         <div>${cities.slice(0, 3).join(', ')}${cities.length > 3 ? '…' : ''}</div>
       </div>
     `;
@@ -217,7 +217,7 @@ function renderMap(trips = getFilteredTrips()) {
       position: { lat: leg.arrival.lat, lng: leg.arrival.lng },
       map: showMarkers ? map : null,
       content: container,
-      title: `${city} – ${count} visit${count > 1 ? 'e' : 'a'}`
+      title: `${city} – ${count} visit${count !== 1 ? 's' : ''}`
     });
 
     marker.addListener("click", () => {
@@ -248,9 +248,9 @@ function clearMap() {
 
 function formatDateRange(start, end) {
   if (!start) return "–";
-  const ds = new Date(start).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+  const ds = new Date(start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   if (!end || start === end) return ds;
-  return ds + " → " + new Date(end).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+  return ds + " → " + new Date(end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function showTripDetails(trip, event) {
@@ -261,7 +261,7 @@ function showTripDetails(trip, event) {
   drawTripWithNumberedMarkers(trip);
 
   let html = `<h2>${trip.tripName}</h2>`;
-  if (trip.companions.length) html += `<p>Con: ${trip.companions.join(', ')}</p>`;
+  if (trip.companions.length) html += `<p>With: ${trip.companions.join(', ')}</p>`;
 
   let prevArrival = null;
   html += '<div class="legs">';
@@ -283,7 +283,7 @@ function showTripDetails(trip, event) {
         const totalStay = dayDiff + (isLateDeparture ? 1 : 0);
         if (totalStay > 0 && !["Milan", "Origgio"].includes(prevArrival.city)) {
           html += `<div class="leg-item stay">
-            ${icon('home')} Sosta a <strong>${prevArrival.city}</strong>: ${totalStay} giorn${totalStay > 1 ? 'i' : 'o'}
+            ${icon('home')} Stay in <strong>${prevArrival.city}</strong>: ${totalStay} day${totalStay !== 1 ? 's' : ''}
           </div>`;
         }
       }
@@ -294,7 +294,7 @@ function showTripDetails(trip, event) {
 
     html += `<div class="leg-item ${colorClass}">
       ${icon(iconName)} ${formatDateTime(leg.departure)} → ${formatDateTime(leg.arrival)}<br>
-      <small>${leg.arrival.city} • ${leg.distanceKm ? Math.round(leg.distanceKm) + ' km' : ''}${leg.isTransit ? ' (transito)' : ''}</small>
+      <small>${leg.arrival.city} • ${leg.distanceKm ? Math.round(leg.distanceKm) + ' km' : ''}${leg.isTransit ? ' (transit)' : ''}</small>
     </div>`;
 
     prevArrival = {
@@ -307,7 +307,7 @@ function showTripDetails(trip, event) {
 
   if (prevArrival && !prevArrival.isTransit && !["Milan", "Origgio"].includes(prevArrival.city)) {
     html += `<div class="leg-item stay">
-      ${icon('flag')} Fine viaggio a <strong>${prevArrival.city}</strong>
+      ${icon('flag')} End of trip in <strong>${prevArrival.city}</strong>
     </div>`;
   }
 
@@ -321,11 +321,11 @@ function showTripDetails(trip, event) {
     `;
   }
 
-  // Fase 2: galleria foto — per ora mostra solo un placeholder se presente il link
+  // Phase 2: photo gallery — for now just a placeholder if the link is present
   if (trip.photoAlbumUrl) {
     html += `
       <button class="photo-btn" onclick="openPhotoPage('${trip.photoAlbumUrl}')">
-        ${icon('camera')} Foto del viaggio
+        ${icon('camera')} Trip photos
       </button>
     `;
   }
@@ -394,7 +394,7 @@ function drawTripWithNumberedMarkers(trip) {
       position: { lat: leg.arrival.lat, lng: leg.arrival.lng },
       map: showMarkers ? map : null,
       content: container,
-      title: `${city} – tappa ${steps.join(', ')}`
+      title: `${city} – stop ${steps.join(', ')}`
     });
 
     cityMarkers[`sel_${city}`] = marker;
@@ -406,13 +406,13 @@ function drawTripWithNumberedMarkers(trip) {
 function formatDateTime(obj) {
   if (!obj || !obj.date) return '–';
   const d = parseDate(obj.date);
-  const dateStr = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+  const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   return obj.time ? `${dateStr} ${obj.time.slice(0, 5)}` : dateStr;
 }
 
 function formatDate(d) {
   if (!d) return '–';
-  return parseDate(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
+  return parseDate(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function showCityDetails(city, trips) {
@@ -455,7 +455,7 @@ function showCityDetails(city, trips) {
   visits.sort((a, b) => parseDate(b.arrivalDate) - parseDate(a.arrivalDate));
 
   let html = `<h2>${city}</h2>`;
-  html += `<p>Visitata <strong>${visits.length}</strong> volt${visits.length > 1 ? 'e' : ''}</p>`;
+  html += `<p>Visited <strong>${visits.length}</strong> time${visits.length !== 1 ? 's' : ''}</p>`;
   html += '<div class="legs">';
 
   visits.forEach(v => {
@@ -464,7 +464,7 @@ function showCityDetails(city, trips) {
       <div class="leg-item city-visit">
         <div><strong>${v.trip.tripName}</strong></div>
         <div style="font-size:0.9em; opacity:0.9; margin-top:4px;">
-          ${dateStr} • ${v.days} giorn${v.days > 1 ? 'i' : 'o'}
+          ${dateStr} • ${v.days} day${v.days !== 1 ? 's' : ''}
         </div>
       </div>
     `;
@@ -474,7 +474,7 @@ function showCityDetails(city, trips) {
   document.getElementById("details-content").innerHTML = html;
 }
 
-// MOBILE: DRAWER LATERALE
+// MOBILE: SIDE DRAWER
 if (window.innerWidth <= 900) {
   document.documentElement.classList.add('mobile');
 
@@ -497,7 +497,7 @@ if (window.innerWidth <= 900) {
   });
 }
 
-// Fase 2: galleria foto — per ora solo un avviso, la pagina vera arriverà dopo
+// Phase 2: photo gallery — for now just a heads-up, the real page comes later
 function openPhotoPage(folderUrl) {
-  alert("Galleria foto in arrivo nella prossima fase 📸");
+  alert("Photo gallery coming in the next phase 📸");
 }
