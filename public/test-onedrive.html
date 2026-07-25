@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OneDrive test</title>
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+  <script src="auth.js"></script>
+  <style>
+    body { font-family: monospace; background:#111; color:#0f0; padding:20px; }
+    button { font-size:16px; padding:10px 20px; cursor:pointer; }
+    pre { white-space: pre-wrap; word-break: break-word; background:#000; padding:14px; border:1px solid #333; }
+    #status { color:#4fc3f7; margin:14px 0; font-size:15px; }
+  </style>
+</head>
+<body>
+  <h1>OneDrive Graph test</h1>
+  <button id="loginBtn" onclick="doLogin()" style="display:none;">Sign in with Microsoft</button>
+  <div id="status">Loading…</div>
+  <pre id="output"></pre>
+
+  <script>
+    function doLogin() {
+      msalInstance.loginRedirect({ scopes: ["User.Read", "Files.Read"] });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const statusEl = document.getElementById('status');
+      const outputEl = document.getElementById('output');
+
+      await loadConfig();
+      msalInstance = new msal.PublicClientApplication(getMsalConfig());
+
+      try {
+        await msalInstance.handleRedirectPromise();
+      } catch (err) {
+        statusEl.textContent = 'Redirect error: ' + err.message;
+        return;
+      }
+
+      const account = msalInstance.getAllAccounts()[0];
+
+      if (!account) {
+        statusEl.textContent = 'Not signed in.';
+        document.getElementById('loginBtn').style.display = 'inline-block';
+        return;
+      }
+
+      statusEl.textContent = `Signed in as ${account.username}. Requesting Graph token…`;
+
+      let tokenResult;
+      try {
+        tokenResult = await msalInstance.acquireTokenSilent({
+          scopes: ["Files.Read"],
+          account: account
+        });
+      } catch (err) {
+        statusEl.textContent = 'Token error: ' + err.name + ' — ' + err.message;
+        outputEl.textContent = err.stack || '';
+        return;
+      }
+
+      statusEl.textContent = 'Token OK. Calling Graph /me/drive/root:/Pictures:/children …';
+
+      try {
+        const res = await fetch(
+          'https://graph.microsoft.com/v1.0/me/drive/root:/Pictures:/children',
+          { headers: { Authorization: 'Bearer ' + tokenResult.accessToken } }
+        );
+        const data = await res.json();
+        statusEl.textContent = `Graph responded with HTTP ${res.status}`;
+        outputEl.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        statusEl.textContent = 'Fetch error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
