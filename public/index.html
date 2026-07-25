@@ -62,7 +62,7 @@
   <script src="app.js"></script>
 
   <script>
-    // Called by auth.js after a successful login
+    // Called by our own init below after a successful login
     function startMyTravel() {
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-container").style.display = "grid";
@@ -79,6 +79,24 @@
         document.head.appendChild(script);
       });
     }
+
+    // Init specifico di questa pagina (index.html). photos.html ha la sua
+    // versione dedicata in photos.js, non condividono più questo blocco.
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadConfig();
+
+      msalInstance = new msal.PublicClientApplication(getMsalConfig());
+
+      msalInstance.handleRedirectPromise().then(() => {
+        const ok = checkLogin();
+        if (ok) {
+          // addLogoutButton(); // scommenta solo per testare il logout MSAL
+          startMyTravel();
+        }
+      }).catch(err => {
+        console.error("MSAL ERROR:", err);
+      });
+    });
   </script>
 
 </body>

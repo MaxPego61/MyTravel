@@ -103,18 +103,9 @@ function loadGoogleKey() {
     return Promise.resolve(window.GOOGLE_MAPS_API_KEY);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await loadConfig();
-
-    msalInstance = new msal.PublicClientApplication(getMsalConfig());
-
-    msalInstance.handleRedirectPromise().then(() => {
-        const ok = checkLogin();
-        if (ok) {
-            // addLogoutButton(); // scommenta solo per testare il logout MSAL
-            startMyTravel();
-        }
-    }).catch(err => {
-        console.error("MSAL ERROR:", err);
-    });
-});
+// NOTA: l'inizializzazione (loadConfig + creazione msalInstance + handleRedirectPromise)
+// NON avviene più qui, perché auth.js è condiviso anche da photos.html, che ha una
+// propria inizializzazione dedicata in photos.js. Farla partire automaticamente qui
+// causava una doppia inizializzazione MSAL in corsa tra loro su ogni pagina che
+// include questo file. Vedi lo script inline in index.html per l'init della pagina
+// principale, e photos.js per quella della galleria foto.
