@@ -2,7 +2,11 @@ function getMsalConfig() {
     return {
         auth: {
             clientId: window.MS_CLIENT_ID,
-            authority: `https://login.microsoftonline.com/${window.MS_TENANT_ID}`,
+            // /consumers è l'authority corretta per account Microsoft personali
+            // (@outlook.com, @hotmail.com, ecc.) — usare il tenant ID specifico
+            // funziona per il login ma fa fallire le chiamate Graph a OneDrive
+            // con l'errore fuorviante "Tenant does not have a SPO license".
+            authority: `https://login.microsoftonline.com/consumers`,
             redirectUri: window.location.origin,
             postLogoutRedirectUri: window.location.origin
         },
