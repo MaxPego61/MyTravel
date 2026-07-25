@@ -1,3 +1,4 @@
+
 function getMsalConfig() {
     return {
         auth: {
@@ -21,7 +22,9 @@ function getMsalConfig() {
     };
 }
 
+
 let msalInstance;
+
 
 function signIn() {
     msalInstance.loginRedirect({
