@@ -13,8 +13,7 @@ function setStatus(msg, isError = false) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-async function fetchAlbumItems(folderPath) {
-  const token = await getGraphToken();
+async function fetchAlbumItems(folderPath, token) {
   const encodedPath = folderPath.split('/').map(encodeURIComponent).join('/');
   const url = `https://graph.microsoft.com/v1.0/me/drive/root:/Pictures/${encodedPath}:/children?$expand=thumbnails&$top=200`;
 
@@ -140,41 +139,10 @@ function renderLightboxContent() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const folderPath = getFolderFromUrl();
-
-  if (!folderPath) {
-    setStatus('No album specified.', true);
-    return;
-  }
-
-  document.getElementById('albumTitle').textContent = folderPath.split('/').pop();
-
-  await loadConfig();
-  msalInstance = new msal.PublicClientApplication(getMsalConfig());
-
+async function loadAlbum(folderPath, token) {
   try {
-    await msalInstance.handleRedirectPromise();
-
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length === 0) {
-      // No cached session found even in localStorage — rather than starting an
-      // interactive redirect from here (which would land back on the main app
-      // and lose this album's context), ask the user to sign in there first.
-      document.getElementById('river-gallery').style.display = 'none';
-      setStatus('');
-      document.getElementById('album-status').innerHTML = `
-        <p>You need to be signed in on the main MyTravel page first.</p>
-        <p style="margin-top:10px;">
-          <a href="/" target="_blank" style="color:#4fc3f7;">Open MyTravel and sign in</a>,
-          then reopen this album.
-        </p>
-      `;
-      return;
-    }
-
     setStatus('Loading photos…');
-    const rawItems = await fetchAlbumItems(folderPath);
+    const rawItems = await fetchAlbumItems(folderPath, token);
     ITEMS = rawItems.map(mapGraphItem).filter(Boolean);
 
     // Chronological order
@@ -187,11 +155,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setStatus('');
     renderGallery(ITEMS);
-
   } catch (err) {
     console.error('Photo album error:', err);
     setStatus(`Unable to load this album: ${err.message}`, true);
   }
+}
+
+function showSignInMessage() {
+  document.getElementById('river-gallery').style.display = 'none';
+  setStatus('');
+  document.getElementById('album-status').innerHTML = `
+    <p>You need to be signed in on the main MyTravel page first.</p>
+    <p style="margin-top:10px;">
+      <a href="/" target="_blank" style="color:#4fc3f7;">Open MyTravel and sign in</a>,
+      then reopen this album.
+    </p>
+  `;
+}
+
+// Fallback for when this page is opened directly (bookmark, typed URL) rather
+// than via the "Trip photos" button — tries the classic MSAL silent flow,
+// which may hit the iframe/third-party-cookie limitations described above.
+async function tryFallbackMsalToken() {
+  await loadConfig();
+  msalInstance = new msal.PublicClientApplication(getMsalConfig());
+  await msalInstance.handleRedirectPromise();
+
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length === 0) {
+    showSignInMessage();
+    return null;
+  }
+
+  try {
+    return await getGraphToken();
+  } catch (err) {
+    console.error('Fallback token acquisition failed:', err);
+    showSignInMessage();
+    return null;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const folderPath = getFolderFromUrl();
+
+  if (!folderPath) {
+    setStatus('No album specified.', true);
+    return;
+  }
+
+  document.getElementById('albumTitle').textContent = folderPath.split('/').pop();
 
   document.getElementById('lbClose').onclick = closeLightbox;
   document.getElementById('lbNext').onclick = showNext;
@@ -207,4 +220,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'ArrowRight') showNext();
     if (e.key === 'ArrowLeft') showPrev();
   });
+
+  let handled = false;
+
+  if (window.opener) {
+    setStatus('Requesting access…');
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (handled) return;
+
+      if (event.data?.type === 'graphToken') {
+        handled = true;
+        loadAlbum(folderPath, event.data.token);
+      } else if (event.data?.type === 'graphTokenError') {
+        handled = true;
+        setStatus(`Unable to get access to OneDrive: ${event.data.message}`, true);
+      }
+    });
+
+    // Tell the opener we're ready to receive the token
+    window.opener.postMessage({ type: 'photosReady' }, window.location.origin);
+
+    // Safety net: if no reply arrives quickly, fall back to the classic flow
+    setTimeout(async () => {
+      if (handled) return;
+      handled = true;
+      const token = await tryFallbackMsalToken();
+      if (token) loadAlbum(folderPath, token);
+    }, 4000);
+
+  } else {
+    // Opened directly, no opener to ask — go straight to the fallback
+    tryFallbackMsalToken().then(token => {
+      if (token) loadAlbum(folderPath, token);
+    });
+  }
 });

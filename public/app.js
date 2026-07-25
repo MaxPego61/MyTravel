@@ -502,8 +502,30 @@ if (window.innerWidth <= 900) {
   });
 }
 
-// Phase 2: photo gallery — opens a new window with the OneDrive album viewer
+// Phase 2: photo gallery — opens a new window and hands it a fresh Graph
+// token via postMessage, instead of letting photos.html try to acquire its
+// own token through a hidden iframe (unreliable with third-party cookie
+// blocking in modern browsers).
 function openPhotoPage(folderPath) {
   const url = `photos.html?folder=${encodeURIComponent(folderPath)}`;
-  window.open(url, '_blank');
+  const win = window.open(url, '_blank');
+  if (!win) {
+    alert("The browser blocked the popup. Please allow popups for this site and try again.");
+    return;
+  }
+
+  const onMessage = async (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type !== 'photosReady') return;
+    window.removeEventListener('message', onMessage);
+
+    try {
+      const token = await getGraphToken();
+      win.postMessage({ type: 'graphToken', token }, window.location.origin);
+    } catch (err) {
+      win.postMessage({ type: 'graphTokenError', message: err.message }, window.location.origin);
+    }
+  };
+
+  window.addEventListener('message', onMessage);
 }
