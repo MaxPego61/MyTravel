@@ -15,12 +15,23 @@
 <body>
   <h1>OneDrive Graph test</h1>
   <button id="loginBtn" onclick="doLogin()" style="display:none;">Sign in with Microsoft</button>
+  <button id="consentBtn" onclick="doConsent()">Grant/refresh OneDrive access (Files.Read)</button>
   <div id="status">Loading…</div>
   <pre id="output"></pre>
 
   <script>
     function doLogin() {
       msalInstance.loginRedirect({ scopes: ["User.Read", "Files.Read"] });
+    }
+
+    // Forces the Microsoft consent screen even if there's already a cached
+    // session — needed because Files.Read was added after your last login,
+    // so the current session never actually consented to it.
+    function doConsent() {
+      msalInstance.loginRedirect({
+        scopes: ["User.Read", "Files.Read"],
+        prompt: "consent"
+      });
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
