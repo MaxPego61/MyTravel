@@ -1,5 +1,7 @@
 let ITEMS = [];      // flat list of {type, name, thumbUrl, fullUrl, width, height}
 let currentIndex = -1;
+let GRAPH_TOKEN = null;   // kept around so the lightbox can request converted images on demand
+let currentObjectUrl = null; // tracks the blob URL currently shown, so we can revoke it
 
 function getFolderFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -46,6 +48,7 @@ function mapGraphItem(item) {
   const height = (isVideo ? item.video.height : item.image?.height) || 600;
 
   return {
+    id: item.id,
     type: isVideo ? 'video' : 'photo',
     name: item.name,
     thumbUrl: thumb,
@@ -118,6 +121,10 @@ function openLightbox(index) {
 function closeLightbox() {
   document.getElementById('lightbox').classList.add('hidden');
   document.getElementById('lbContent').innerHTML = '';
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
 }
 
 function showNext() {
@@ -130,10 +137,26 @@ function showPrev() {
   renderLightboxContent();
 }
 
-function renderLightboxContent() {
+async function fetchLargeImageBlobUrl(itemId) {
+  const res = await fetch(
+    `https://graph.microsoft.com/v1.0/me/drive/items/${itemId}/thumbnails/0/c1920x1920/content`,
+    { headers: { Authorization: `Bearer ${GRAPH_TOKEN}` } }
+  );
+  if (!res.ok) throw new Error(`Thumbnail conversion failed: ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+async function renderLightboxContent() {
   const item = ITEMS[currentIndex];
   const content = document.getElementById('lbContent');
   content.innerHTML = '';
+
+  // Free the previous blob URL, if any, before loading the next one
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
 
   if (item.type === 'video') {
     const video = document.createElement('video');
@@ -141,15 +164,44 @@ function renderLightboxContent() {
     video.controls = true;
     video.autoplay = true;
     content.appendChild(video);
-  } else {
-    const img = document.createElement('img');
-    img.src = item.fullUrl;
-    img.alt = item.name;
-    content.appendChild(img);
+    return;
+  }
+
+  // Photos: request a server-converted JPEG. This is what makes iPhone
+  // .heic photos (unreadable by <img> in Chrome/Firefox/Edge) display
+  // correctly everywhere, and it's lighter than the original file too.
+  const loading = document.createElement('div');
+  loading.style.color = '#4fc3f7';
+  loading.textContent = 'Loading…';
+  content.appendChild(loading);
+
+  try {
+    const blobUrl = await fetchLargeImageBlobUrl(item.id);
+    currentObjectUrl = blobUrl;
+
+    // Only apply if the user hasn't already navigated to another photo
+    // while this was loading
+    if (ITEMS[currentIndex] === item) {
+      content.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = blobUrl;
+      img.alt = item.name;
+      content.appendChild(img);
+    }
+  } catch (err) {
+    console.error('Image conversion failed, falling back to original file:', err);
+    if (ITEMS[currentIndex] === item) {
+      content.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = item.fullUrl;
+      img.alt = item.name;
+      content.appendChild(img);
+    }
   }
 }
 
 async function loadAlbum(folderPath, token) {
+  GRAPH_TOKEN = token;
   ITEMS = [];
   document.getElementById('river-gallery').innerHTML = '';
   document.getElementById('river-gallery').style.display = 'flex';
