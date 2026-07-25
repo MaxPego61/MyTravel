@@ -321,16 +321,21 @@ function showTripDetails(trip, event) {
     `;
   }
 
-  // Phase 2: photo gallery — for now just a placeholder if the link is present
-  if (trip.photoAlbumUrl) {
+  // Phase 2: photo gallery — opens photos.html in a new window
+  if (trip.photoFolder) {
     html += `
-      <button class="photo-btn" onclick="openPhotoPage('${trip.photoAlbumUrl}')">
+      <button class="photo-btn" data-photo-folder="${trip.photoFolder.replace(/"/g, '&quot;')}">
         ${icon('camera')} Trip photos
       </button>
     `;
   }
 
   document.getElementById("details-content").innerHTML = html;
+
+  const photoBtn = document.querySelector('.photo-btn');
+  if (photoBtn) {
+    photoBtn.onclick = () => openPhotoPage(photoBtn.dataset.photoFolder);
+  }
 }
 
 function drawTripWithNumberedMarkers(trip) {
@@ -497,7 +502,8 @@ if (window.innerWidth <= 900) {
   });
 }
 
-// Phase 2: photo gallery — for now just a heads-up, the real page comes later
-function openPhotoPage(folderUrl) {
-  alert("Photo gallery coming in the next phase 📸");
+// Phase 2: photo gallery — opens a new window with the OneDrive album viewer
+function openPhotoPage(folderPath) {
+  const url = `photos.html?folder=${encodeURIComponent(folderPath)}`;
+  window.open(url, '_blank', 'noopener');
 }

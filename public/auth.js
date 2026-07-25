@@ -13,7 +13,7 @@ let msalInstance;
 
 function signIn() {
     msalInstance.loginRedirect({
-        scopes: ["User.Read"]
+        scopes: ["User.Read", "Files.Read"]
     });
 }
 
@@ -23,6 +23,19 @@ function signOut() {
         account: account,
         postLogoutRedirectUri: window.location.origin
     });
+}
+
+// Silently gets a Microsoft Graph access token for the signed-in account.
+// Used by photos.js to call OneDrive without a new interactive login.
+async function getGraphToken() {
+    const account = msalInstance.getAllAccounts()[0];
+    if (!account) throw new Error("No signed-in account");
+
+    const result = await msalInstance.acquireTokenSilent({
+        scopes: ["Files.Read"],
+        account: account
+    });
+    return result.accessToken;
 }
 
 // Client-side whitelist: hides the app from anyone not on the list.
@@ -86,7 +99,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     msalInstance.handleRedirectPromise().then(() => {
         const ok = checkLogin();
         if (ok) {
-            // addLogoutButton();
+            // addLogoutButton(); // scommenta solo per testare il logout MSAL
             startMyTravel();
         }
     }).catch(err => {

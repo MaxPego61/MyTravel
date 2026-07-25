@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MyTravel — Photos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="photos.css">
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+  <script src="auth.js"></script>
+</head>
+<body>
+
+  <div id="album-header">
+    <button id="backBtn" onclick="window.close()">‹ Close</button>
+    <h1 id="albumTitle">Photos</h1>
+  </div>
+
+  <div id="album-status"></div>
+  <div id="river-gallery" class="river-gallery"></div>
+
+  <!-- Fullscreen lightbox -->
+  <div id="lightbox" class="lightbox hidden">
+    <button class="lb-close" id="lbClose">&times;</button>
+    <button class="lb-nav lb-prev" id="lbPrev">&#8249;</button>
+    <div class="lb-content" id="lbContent"></div>
+    <button class="lb-nav lb-next" id="lbNext">&#8250;</button>
+  </div>
+
+  <script src="photos.js"></script>
+</body>
+</html>
