@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>MyTravel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+  <script src="auth.js"></script>
+</head>
+
+<body>
+
+  <!-- Schermata di login, mostrata finché MSAL non conferma l'account -->
+  <div id="login-screen">
+    <h1>MyTravel</h1>
+    <button id="loginBtn" onclick="signIn()">Accedi con Microsoft</button>
+  </div>
+
+  <!-- App vera e propria, nascosta finché non si è autenticati -->
+  <div class="container" id="app-container" style="display:none;">
+    <div id="sidebar-left">
+      <h1>MyTravel</h1>
+      <div class="filters">
+        <input type="text" id="searchBox" placeholder="Cerca viaggio o città...">
+        <select id="yearFilter"><option value="">Tutti gli anni</option></select>
+        <select id="companionFilter"><option value="">Tutti i compagni</option></select>
+        <div class="toggle-buttons">
+          <button id="toggleLines" class="active">Tratte ON</button>
+          <button id="toggleMarkers" class="active">Marker ON</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">Viaggi <span id="totalTrips">0</span></div>
+        <div class="stat">Voli <span id="totalFlights">0</span></div>
+        <div class="stat">Km <span id="totalKm">0</span></div>
+        <div class="stat">Paesi <span id="totalCountries">0</span></div>
+      </div>
+
+      <div id="tripList"></div>
+    </div>
+
+    <div id="map">
+      <div id="map-loading" class="map-loading">Caricamento mappa...</div>
+    </div>
+
+    <div class="mobile-controls" id="mobileControls">
+      <div class="mobile-btn" id="open-left"></div>
+      <div class="mobile-btn" id="open-right"></div>
+    </div>
+
+    <div id="sidebar-right">
+      <div id="details-content">
+        <p><em>Clicca su un viaggio o una città</em></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="icons.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    // Chiamata da auth.js dopo login riuscito
+    function startMyTravel() {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-container").style.display = "grid";
+
+      // Riempie i pulsanti mobile con le icone SVG
+      document.getElementById("open-left").innerHTML = icon("list");
+      document.getElementById("open-right").innerHTML = icon("info");
+
+      loadGoogleKey().then(() => {
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${window.GOOGLE_MAPS_API_KEY}&callback=initMap&libraries=marker&loading=async`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      });
+    }
+  </script>
+
+</body>
+</html>

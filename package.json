@@ -1,0 +1,8 @@
+{
+  "name": "mytravel",
+  "version": "2.0.0",
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "^2.3.1"
+  }
+}
