@@ -245,29 +245,6 @@ function showSignInMessage() {
   `;
 }
 
-// Fallback for when this page is opened directly (bookmark, typed URL) rather
-// than via the "Trip photos" button — tries the classic MSAL silent flow,
-// which may hit the iframe/third-party-cookie limitations described above.
-async function tryFallbackMsalToken() {
-  await loadConfig();
-  msalInstance = new msal.PublicClientApplication(getMsalConfig());
-  await msalInstance.handleRedirectPromise();
-
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length === 0) {
-    showSignInMessage();
-    return null;
-  }
-
-  try {
-    return await getGraphToken();
-  } catch (err) {
-    console.error('Fallback token acquisition failed:', err);
-    showSignInMessage();
-    return null;
-  }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const folderPath = getFolderFromUrl();
 
@@ -295,9 +272,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let handled = false;
 
-  if (window.opener) {
+  function requestTokenFromOpener() {
+    handled = false;
     setStatus('Requesting access…');
+    window.opener.postMessage({ type: 'photosReady' }, window.location.origin);
 
+    // Generous timeout: this only needs to cover the opener doing a token
+    // refresh + postMessage back, no iframe involved, but a slow network
+    // or a cold Vercel function can occasionally take a few seconds.
+    setTimeout(() => {
+      if (handled) return;
+      handled = true;
+      document.getElementById('river-gallery').style.display = 'none';
+      setStatus('');
+      document.getElementById('album-status').innerHTML = `
+        <p>Taking longer than expected to get access to OneDrive.</p>
+        <p style="margin-top:10px;">
+          <button id="retryBtn" style="padding:8px 16px; cursor:pointer;">Retry</button>
+        </p>
+      `;
+      document.getElementById('retryBtn').onclick = requestTokenFromOpener;
+    }, 12000);
+  }
+
+  if (window.opener) {
     window.addEventListener('message', (event) => {
       if (event.origin !== window.location.origin) return;
       if (handled) return;
@@ -311,21 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Tell the opener we're ready to receive the token
-    window.opener.postMessage({ type: 'photosReady' }, window.location.origin);
-
-    // Safety net: if no reply arrives quickly, fall back to the classic flow
-    setTimeout(async () => {
-      if (handled) return;
-      handled = true;
-      const token = await tryFallbackMsalToken();
-      if (token) loadAlbum(folderPath, token);
-    }, 4000);
+    requestTokenFromOpener();
 
   } else {
-    // Opened directly, no opener to ask — go straight to the fallback
-    tryFallbackMsalToken().then(token => {
-      if (token) loadAlbum(folderPath, token);
-    });
+    // Opened directly (bookmark, typed URL) — no opener to ask for a token,
+    // and the classic silent-iframe method doesn't reliably work in modern
+    // browsers, so just point the user back to the main app.
+    showSignInMessage();
   }
 });
