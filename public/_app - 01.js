@@ -529,21 +529,3 @@ function openPhotoPage(folderPath) {
 
   window.addEventListener('message', onMessage);
 }
-
-// Photo Library
-function openLibraryPage() {
-  const win = window.open('library.html', '_blank');
-  if (!win) { alert("Popup blocked."); return; }
-  const onMessage = async (event) => {
-    if (event.origin !== window.location.origin) return;
-    if (event.data?.type !== 'libraryReady') return;
-    window.removeEventListener('message', onMessage);
-    try {
-      const token = await getGraphToken();
-      win.postMessage({ type: 'graphToken', token }, window.location.origin);
-    } catch (err) {
-      win.postMessage({ type: 'graphTokenError', message: err.message }, window.location.origin);
-    }
-  };
-  window.addEventListener('message', onMessage);
-}

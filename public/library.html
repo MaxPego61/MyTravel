@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MyTravel — Library</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="library.css">
+  <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+  <script src="auth.js"></script>
+</head>
+<body>
+
+  <div id="lib-header">
+    <button id="backBtn" onclick="window.close()">‹ Close</button>
+    <h1>Library</h1>
+  </div>
+
+  <div id="lib-status"></div>
+
+  <div id="lib-layout">
+    <div id="lib-tree"></div>
+
+    <div id="lib-content">
+      <div id="lib-breadcrumb"></div>
+      <div id="lib-gallery" class="river-gallery"></div>
+    </div>
+  </div>
+
+  <!-- Fullscreen lightbox (same as photos.html) -->
+  <div id="lightbox" class="lightbox hidden">
+    <button class="lb-close" id="lbClose">&times;</button>
+    <button class="lb-nav lb-prev" id="lbPrev">&#8249;</button>
+    <div class="lb-content" id="lbContent"></div>
+    <button class="lb-nav lb-next" id="lbNext">&#8250;</button>
+  </div>
+
+  <script src="library.js"></script>
+</body>
+</html>
