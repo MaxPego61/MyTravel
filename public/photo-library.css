@@ -78,6 +78,10 @@ body { background:#0e0e0e; color:#e0e0e0; font-family:'Segoe UI', sans-serif; }
 .lightbox.hidden { display:none; }
 .lb-content { max-width:92vw; max-height:88vh; display:flex; align-items:center; justify-content:center; }
 .lb-content img, .lb-content video { max-width:92vw; max-height:88vh; object-fit:contain; }
+/* Stand-in shown immediately from the already-fetched thumbnail, while the
+   full-resolution image downloads in the background. Slightly blurred to
+   hide the upscale softness instead of showing it sharp. */
+.lb-content img.lb-preview { filter:blur(3px); transform:scale(1.02); }
 .lb-close {
   position:absolute; top:16px; right:20px; background:none; border:none;
   color:#e0e0e0; font-size:32px; cursor:pointer;

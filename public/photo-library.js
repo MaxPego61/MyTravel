@@ -46,7 +46,9 @@ async function fetchSubfolders(path, token) {
   await fetchChildrenPaged(path, token, true, (page) => {
     folders.push(...page.filter(i => i.folder).map(i => i.name));
   });
-  folders.sort((a, b) => b.localeCompare(a)); // newest year/album first
+  // Alphabetical, with numeric-aware comparison so "2024-09" sorts after
+  // "2024-08" rather than by character code (which would put "10" before "2").
+  folders.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
   return folders;
 }
 
@@ -253,21 +255,31 @@ async function renderLightboxContent() {
     return;
   }
 
-  const loading = document.createElement('div');
-  loading.style.color = '#4fc3f7';
-  loading.textContent = 'Loading…';
-  content.appendChild(loading);
+  // Show the thumbnail we already have (fetched for the grid, so usually
+  // already in the browser cache) immediately as a stand-in, instead of a
+  // blank "Loading…" pause. It's slightly soft since it's upscaled, hence
+  // the blur — that hides the pixelation better than showing it sharp.
+  const preview = document.createElement('img');
+  preview.className = 'lb-preview';
+  preview.src = item.thumbUrl;
+  preview.alt = item.name;
+  content.appendChild(preview);
 
   try {
     const blobUrl = await fetchLargeImageBlobUrl(item.id);
     currentObjectUrl = blobUrl;
-    if (ITEMS[currentIndex] === item) {
+    if (ITEMS[currentIndex] !== item) return; // user already swiped away
+
+    // Pre-decode off-DOM so the swap to full-res is instant, not another
+    // blank flash while this new image loads.
+    const full = new Image();
+    full.alt = item.name;
+    full.onload = () => {
+      if (ITEMS[currentIndex] !== item) return;
       content.innerHTML = '';
-      const img = document.createElement('img');
-      img.src = blobUrl;
-      img.alt = item.name;
-      content.appendChild(img);
-    }
+      content.appendChild(full);
+    };
+    full.src = blobUrl;
   } catch (err) {
     console.error('Image conversion failed, falling back to original file:', err);
     if (ITEMS[currentIndex] === item) {
@@ -309,6 +321,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowRight') showNext();
     if (e.key === 'ArrowLeft') showPrev();
   });
+
+  // Touch swipe left/right to move between photos on mobile.
+  let touchStartX = null;
+  let touchStartY = null;
+
+  document.getElementById('lightbox').addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+  }, { passive: true });
+
+  document.getElementById('lightbox').addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    touchStartX = null;
+    touchStartY = null;
+
+    // Require a clearly horizontal, deliberate gesture so an accidental
+    // tap or a vertical scroll attempt doesn't also flip the photo.
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) showNext(); else showPrev();
+  }, { passive: true });
 
   let handled = false;
 
