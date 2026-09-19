@@ -95,5 +95,14 @@ body { background:#0e0e0e; color:#e0e0e0; font-family:'Segoe UI', sans-serif; }
   #lib-layout { flex-direction:column; height:auto; }
   #lib-tree { width:100%; height:auto; max-height:35vh; }
   #lib-content { width:100%; }
-  .river-item { height:170px; }
+
+  /* Below 640px the "river" layout (JS-computed widths + flex-grow) only
+     has 1-2 tiles per row, so flex-grow stretches them far past their real
+     aspect ratio and object-fit:cover crops them hard. A fixed square grid
+     avoids the stretching entirely, at the cost of some cropping to square
+     (same trade-off Google Photos makes on mobile). !important is needed
+     because photo-library.js sets an inline width per tile for the desktop
+     river layout. */
+  .river-gallery { display:grid; grid-template-columns:repeat(3, 1fr); gap:3px; }
+  .river-item { width:auto !important; height:auto !important; aspect-ratio:1; }
 }
