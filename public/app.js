@@ -532,7 +532,7 @@ function openPhotoPage(folderPath) {
 
 // Photo Library
 function openLibraryPage() {
-  const win = window.open('library.html', '_blank');
+  const win = window.open('photo-library.html', '_blank');
   if (!win) { alert("Popup blocked."); return; }
   const onMessage = async (event) => {
     if (event.origin !== window.location.origin) return;

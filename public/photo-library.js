@@ -145,7 +145,7 @@ function formatDuration(ms) {
 
 function appendItemsToGallery(items, startIndex) {
   const gallery = document.getElementById('lib-gallery');
-  const rowHeight = window.innerWidth <= 640 ? 120 : 200;
+  const rowHeight = window.innerWidth <= 640 ? 170 : 200;
 
   items.forEach((item, i) => {
     const index = startIndex + i;

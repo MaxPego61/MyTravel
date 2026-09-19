@@ -6,6 +6,28 @@ body { font-family: 'Segoe UI', sans-serif; background:#0e0e0e; color:#e0e0e0; h
 #map { height:100%; position:relative; }
 h1 { color:#4fc3f7; text-align:center; margin-bottom:20px; font-size:28px; }
 
+/* --- Sidebar header: title + "Photo library" button side by side --- */
+.sidebar-header {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-bottom:20px;
+}
+.sidebar-header h1 { margin-bottom:0; }
+.library-btn {
+  padding:6px 14px;
+  font-size:13px;
+  font-weight:bold;
+  color:#4fc3f7;
+  background:transparent;
+  border:1px solid #4fc3f7;
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.library-btn:hover { background:rgba(79,195,247,0.12); }
+
 /* --- Login screen --- */
 #login-screen {
   height:100vh;

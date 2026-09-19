@@ -95,5 +95,5 @@ body { background:#0e0e0e; color:#e0e0e0; font-family:'Segoe UI', sans-serif; }
   #lib-layout { flex-direction:column; height:auto; }
   #lib-tree { width:100%; height:auto; max-height:35vh; }
   #lib-content { width:100%; }
-  .river-item { height:120px; }
+  .river-item { height:170px; }
 }
